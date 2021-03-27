@@ -5,8 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<meta name="author" content="Doc Writer">
-<title>Example Manual</title>
+<meta name="author" content="Haytham Mohamed">
+<title>API and Service Rate Limiting with Spring Cloud Gateway</title>
 <link rel="stylesheet" href="css/site.css">
 <script src="js/setup.js"></script>
     <script defer src="js/site.js"></script>
@@ -28,9 +28,9 @@
   <div id="main" class="contained">
     <div id="doc" class="doc">
 <div id="header">
-<h1>Example Manual</h1>
+<h1>API and Service Rate Limiting with Spring Cloud Gateway</h1>
 <div class="details">
-<span id="author" class="author">Doc Writer</span><br>
+<span id="author" class="author">Haytham Mohamed</span><br>
 <span id="email" class="email"><a href="mailto:haythamm@vmware.com">haythamm@vmware.com</a></span><br>
 <span id="revnumber">version 0.0.1-SNAPSHOT,</span>
 <span id="revdate">2021-03-27</span>
@@ -40,16 +40,51 @@
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>This is a user manual for an example project.</p>
+<p>One of the imperative architectural concern is to protect API and service endpoints from harmful effects such as denial of service, cascading failure or over utilization of resources. Rate limiting is a technique to control the rate by which an API or a service is consumed. In a distributed system, there would not be better than the option to centralize configuring and managing the rate by which consumers can interact with APIs. Only those requests within a defined rate would make it to the API, any more would raise an HTTP “Many requests” error.</p>
+</div>
+<div class="imageblock thumb">
+<div class="content">
+<img src="images/rate-limit-1.svg" alt="rate limit 1">
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_introduction"><a class="anchor" href="#_introduction"></a>Introduction</h2>
-<div class="sectionbody">
 <div class="paragraph">
-<p>This project does something.
-We just haven&#8217;t decided what that is yet.</p>
+<p>Spring Cloud Gateway (SCG) is a simple and light weight component, yet an effective way to manage limiting APIs consumption rates. In this blog, I am going to illustrate how simple that could be accomplished using a configuration method. As illustrated in the figure below, the demonstration consists of a frontend and backend services with a Spring Cloud Gateway service in between.</p>
+</div>
+<div class="imageblock thumb">
+<div class="content">
+<img src="images/backend-gateway-frontend.svg" alt="backend gateway frontend">
+</div>
+</div>
+<div class="paragraph">
+<p>No code so whatever is needed to hook in the SCG in the architecture. You need to include a Spring Boot Cloud dependency “org.springframework.cloud: spring-cloud-starter-gateway” in a vanilla Spring Boot application and you’re set to go with the appropriate configuration settings.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Requests received by a SCG from a frontend service could be routed to a backend service based on a configured route definition. A route definition configuration specifies to the gateway how a request should be routed to a backend endpoint. A route configuration usually defines conditions based on information that could be extracted from HTTP requests, such as paths and headers.</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example, the snippet below lists a YAML stanza to configure a predicate to define a condition under which requests should be routed to a backend service. The example below shows that requests should target the backend service when the gateway is hit with “/backend” in the path.  In the configuration, the route is given an identifier and a URI to reach the backend service.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route1
+          uri: http://localhost:8081
+          predicates:
+            - Path=/backend</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>“RequestRateLimiter” is one of the many gateway filters offered by SCG out of the box. The implementation determines whether a request is allowed to proceed or has exceeded its limit. The implementation allows to determine a key to manage bucketing up the number of requests made, and Redis could be used to keep track of the counts. A blueprint architecture could be depicted in which a gateway</p>
+</div>
+<div class="imageblock thumb">
+<div class="content">
+<img src="images/redis-rate-limiting.svg" alt="redis rate limiting">
+</div>
 </div>
 </div>
 </div>
@@ -59,25 +94,27 @@ We just haven&#8217;t decided what that is yet.</p>
 <div class="listingblock">
 <div class="title">Java code from project</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java"></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This page was built by the following command:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ mvn</pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_images"><a class="anchor" href="#_images"></a>Images</h2>
-<div class="sectionbody">
-<div class="imageblock thumb">
-<div class="content">
-<img src="images/backend-gateway-frontend.svg" alt="backend gateway frontend">
+<pre class="highlight"><code class="language-java" data-lang="java"><span class="fold-block hide-when-folded">import java.time.Instant;
+
+import reactor.core.publisher.Mono;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+</span><span class="fold-block">/**
+ * @author : Haytham Mohamed
+ * @created : Friday 3/26/21
+ **/
+
+@RestController
+public class RestEndPoint {
+
+	@GetMapping("/backend")
+	public Mono&lt;String&gt; endpoint() {
+		return Mono.just("From backend service at " + Instant.now());
+	}
+}
+</span></code></pre>
 </div>
 </div>
 </div>
@@ -133,7 +170,7 @@ We just haven&#8217;t decided what that is yet.</p>
 <div id="footer">
 <div id="footer-text">
 Version 0.0.1-SNAPSHOT<br>
-Last updated 2021-03-27 01:03:27 -0500
+Last updated 2021-03-27 11:04:43 -0500
 </div>
 </div>
 </div>
