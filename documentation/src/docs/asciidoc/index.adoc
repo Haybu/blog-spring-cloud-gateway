@@ -1,6 +1,5 @@
 = API and Service Rate Limiting with Spring Cloud Gateway
-Haytham Mohamed <haythamm@vmware.com>
-2021-03-27
+Haytham Mohamed <haythamm@vmware.com> 2021-03-27
 :revnumber: {project-version}
 :example-caption!:
 :chomp: all
@@ -19,9 +18,10 @@ image::backend-gateway-frontend.svg[scaledwidth=75%]
 
 No code so whatever is needed to hook in the SCG in the architecture. You need to include a Spring Boot Cloud dependency “org.springframework.cloud: spring-cloud-starter-gateway” in a vanilla Spring Boot application and you’re set to go with the appropriate configuration settings.
 
-	Requests received by a SCG from a frontend service could be routed to a backend service based on a configured route definition. A route definition configuration specifies to the gateway how a request should be routed to a backend endpoint. A route configuration usually defines conditions based on information that could be extracted from HTTP requests, such as paths and headers.
+Requests received by a SCG from a frontend service could be routed to a backend service based on a configured route definition. A route definition configuration specifies to the gateway how a request should be routed to a backend endpoint. A route configuration usually defines conditions based on information that could be extracted from HTTP requests, such as paths and headers.
 
-For example, the snippet below lists a YAML stanza to configure a predicate to define a condition under which requests should be routed to a backend service. The example below shows that requests should target the backend service when the gateway is hit with “/backend” in the path.  In the configuration, the route is given an identifier and a URI to reach the backend service.
+For example, the snippet below lists a YAML stanza to configure the condition under which requests should be routed to a backend service. It shows that requests should target the backend service when the gateway is hit with “/backend” in the path.  In the configuration, the route is given an identifier and the backend service URI.
+
 
 [source, yaml]
 ----
@@ -35,30 +35,82 @@ spring:
             - Path=/backend
 ----
 
-“RequestRateLimiter” is one of the many gateway filters offered by SCG out of the box. The implementation determines whether a request is allowed to proceed or has exceeded its limit. The implementation allows to determine a key to manage bucketing up the number of requests made, and Redis could be used to keep track of the counts. A blueprint architecture could be depicted in which a gateway
+“RequestRateLimiter” is one of the many gateway filters offered by SCG out of the box. The implementation determines whether a request is allowed to proceed or has exceeded its limit. The implementation allows to optionally plug in a key to manage limiting the number of requests to different services. While it is customizable to implement how to resolve a key, the gateway comes out of the box with one that leverages a user’s “Principal” name.  A secured gateway is needed to resolve a user’s principal name, but you have the option to implement the “KeyResolver” interface to resolve a different key instead from the “ServerWebExchange”. You can point to a custom KeyResolver bean (i.e., named customKeyResolver) in the configuration using SPEL #{@customKeyResolver} expression.
+
+[source,java]
+.KeyResolver interface
+----
+public interface KeyResolver {
+    Mono<String> resolve(ServerWebExchange exchange);
+}
+----
+
+The gateway would deny requests if no key was resolved. To let the gateway accept a missing resolved key, you can set the following property:
+
+[source,properties]
+----
+spring.cloud.gateway.filter.request-rate-limiter.deny-empty-key=false
+----
+
+You can also specify a status code that the gateway should report when it could not figure out a key by setting the property:
+
+[source,properties]
+----
+spring.cloud.gateway.filter.request-rate-limiter.empty-key-status-code=
+----
+
+A blueprint architecture could be depicted in which a gateway mediates limiting API consumptions using Redis. The provided Redis implementation uses the Token Bucket algorithm, and to use it you need to include the (spring-boot-starter-data-redis) Spring Boot starter dependency to the gateway application.
 
 [.thumb]
 image::redis-rate-limiting.svg[scaledwidth=75%]
 
-== Source Code
+The provided Redis implementation allows to define a requests rate by which users can make per certain time period. It also allows to accommodate sporadic demands while constraint by the defined consumption rate. For example, a configuration can define a replenish rate of 500 requests per second using the property (redis-rate-limiter.replenishRate = 500) and a burst capacity of 1000 request per second by setting the property (redis-rate-limiter.burstCapacity). This would limit consumption to 500 requests every second, if a burst in number of requests occurs only 1000 requests are allowed. However, because 1000 requests are a quota of 2 seconds, the gateway wouldn’t route requests for the next second round. The configuration allows also to define how many token a request would cost by setting the property (redis-rate-limiter.requestedTokens), commonly it is set to 1.
 
-[source,java]
-.Java code from project
+To use a gateway with a request limiting feature, it needs to be configured with the (RequestRateLimiter)gateway filter. The configuration can specify arguments to define a replenish rate, burst capacity and number of token that a request would cost. The example below illustrates how to configure a gateway with these arguments.
+
+[source, yaml]
 ----
-include::./../../../../backend-service/src/main/java/io/agilehandy/backendservice/RestEndPoint.java[indent=0]
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route1
+          uri: http://localhost:8081
+          predicates:
+            - Path=/backend
+          filters:
+          - name: RequestRateLimiter
+            args:
+              redis-rate-limiter.replenishRate: 500
+              redis-rate-limiter.burstCapacity: 1000
+              redis-rate-limiter.requestedTokens: 1
 ----
 
+Spring cloud gateway provides flexibility to define your own custom rate limiter implementation. It caters a RateLimiter interface to implement and define a bean. The rate limiter bean could be configured using SPEL expression as the case with a custom key resolver. For instance, one can define a custom rate limiter bean, i.e., named customRateLimiter and a custom key resolver, i.e., named customKeyResolver and configure a route like this:
 
-== Attributes
+[source, java]
+----
+@Bean
+public KeyResolver customKeyResolver {
+	return exchange -> ....  // returns a Mono of String
+}
+----
 
-.Built-in
-asciidoctor-version:: {asciidoctor-version}
-safe-mode-name:: {safe-mode-name}
-docdir:: {docdir}
-docfile:: {docfile}
-imagesdir:: {imagesdir}
+[source, yaml]
+----
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route1
+          uri: http://localhost:8081
+          predicates:
+            - Path=/backend
+          filters:
+          - name: RequestRateLimiter
+            args:
+              rate-limiter: "#{customRateLimiter}"
+              key-resolver: "#{customKeyResolver}"
+----
 
-.Custom
-project-version:: {project-version}
-sourcedir:: {sourcedir}
-endpoint-url:: {endpoint-url}
+An illustrating example is available in https://github.com/Haybu/learn-scg-rate-limiting[GitHub]

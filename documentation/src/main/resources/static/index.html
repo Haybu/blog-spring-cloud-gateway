@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<meta name="author" content="Haytham Mohamed">
+<meta name="author" content="Haytham Mohamed &lt;haythamm@vmware.com&gt; 2021-03-27">
 <title>API and Service Rate Limiting with Spring Cloud Gateway</title>
 <link rel="stylesheet" href="css/site.css">
 <script src="js/setup.js"></script>
@@ -30,15 +30,11 @@
 <div id="header">
 <h1>API and Service Rate Limiting with Spring Cloud Gateway</h1>
 <div class="details">
-<span id="author" class="author">Haytham Mohamed</span><br>
-<span id="email" class="email"><a href="mailto:haythamm@vmware.com">haythamm@vmware.com</a></span><br>
-<span id="revnumber">version 0.0.1-SNAPSHOT,</span>
-<span id="revdate">2021-03-27</span>
+<span id="author" class="author">Haytham Mohamed &lt;haythamm@vmware.com&gt; 2021-03-27</span><br>
+<span id="revnumber">version 0.0.1-SNAPSHOT</span>
 </div>
 </div>
 <div id="content">
-<div id="preamble">
-<div class="sectionbody">
 <div class="paragraph">
 <p>One of the imperative architectural concern is to protect API and service endpoints from harmful effects such as denial of service, cascading failure or over utilization of resources. Rate limiting is a technique to control the rate by which an API or a service is consumed. In a distributed system, there would not be better than the option to centralize configuring and managing the rate by which consumers can interact with APIs. Only those requests within a defined rate would make it to the API, any more would raise an HTTP “Many requests” error.</p>
 </div>
@@ -58,13 +54,11 @@
 <div class="paragraph">
 <p>No code so whatever is needed to hook in the SCG in the architecture. You need to include a Spring Boot Cloud dependency “org.springframework.cloud: spring-cloud-starter-gateway” in a vanilla Spring Boot application and you’re set to go with the appropriate configuration settings.</p>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>Requests received by a SCG from a frontend service could be routed to a backend service based on a configured route definition. A route definition configuration specifies to the gateway how a request should be routed to a backend endpoint. A route configuration usually defines conditions based on information that could be extracted from HTTP requests, such as paths and headers.</pre>
-</div>
+<div class="paragraph">
+<p>Requests received by a SCG from a frontend service could be routed to a backend service based on a configured route definition. A route definition configuration specifies to the gateway how a request should be routed to a backend endpoint. A route configuration usually defines conditions based on information that could be extracted from HTTP requests, such as paths and headers.</p>
 </div>
 <div class="paragraph">
-<p>For example, the snippet below lists a YAML stanza to configure a predicate to define a condition under which requests should be routed to a backend service. The example below shows that requests should target the backend service when the gateway is hit with “/backend” in the path.  In the configuration, the route is given an identifier and a URI to reach the backend service.</p>
+<p>For example, the snippet below lists a YAML stanza to configure the condition under which requests should be routed to a backend service. It shows that requests should target the backend service when the gateway is hit with “/backend” in the path.  In the configuration, the route is given an identifier and the backend service URI.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -79,98 +73,100 @@
 </div>
 </div>
 <div class="paragraph">
-<p>“RequestRateLimiter” is one of the many gateway filters offered by SCG out of the box. The implementation determines whether a request is allowed to proceed or has exceeded its limit. The implementation allows to determine a key to manage bucketing up the number of requests made, and Redis could be used to keep track of the counts. A blueprint architecture could be depicted in which a gateway</p>
+<p>“RequestRateLimiter” is one of the many gateway filters offered by SCG out of the box. The implementation determines whether a request is allowed to proceed or has exceeded its limit. The implementation allows to optionally plug in a key to manage limiting the number of requests to different services. While it is customizable to implement how to resolve a key, the gateway comes out of the box with one that leverages a user’s “Principal” name.  A secured gateway is needed to resolve a user’s principal name, but you have the option to implement the “KeyResolver” interface to resolve a different key instead from the “ServerWebExchange”. You can point to a custom KeyResolver bean (i.e., named customKeyResolver) in the configuration using SPEL #{@customKeyResolver} expression.</p>
+</div>
+<div class="listingblock">
+<div class="title">KeyResolver interface</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">public interface KeyResolver {
+    Mono&lt;String&gt; resolve(ServerWebExchange exchange);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The gateway would deny requests if no key was resolved. To let the gateway accept a missing resolved key, you can set the following property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-properties" data-lang="properties">spring.cloud.gateway.filter.request-rate-limiter.deny-empty-key=false</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can also specify a status code that the gateway should report when it could not figure out a key by setting the property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-properties" data-lang="properties">spring.cloud.gateway.filter.request-rate-limiter.empty-key-status-code=</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A blueprint architecture could be depicted in which a gateway mediates limiting API consumptions using Redis. The provided Redis implementation uses the Token Bucket algorithm, and to use it you need to include the (spring-boot-starter-data-redis) Spring Boot starter dependency to the gateway application.</p>
 </div>
 <div class="imageblock thumb">
 <div class="content">
 <img src="images/redis-rate-limiting.svg" alt="redis rate limiting">
 </div>
 </div>
+<div class="paragraph">
+<p>The provided Redis implementation allows to define a requests rate by which users can make per certain time period. It also allows to accommodate sporadic demands while constraint by the defined consumption rate. For example, a configuration can define a replenish rate of 500 requests per second using the property (redis-rate-limiter.replenishRate = 500) and a burst capacity of 1000 request per second by setting the property (redis-rate-limiter.burstCapacity). This would limit consumption to 500 requests every second, if a burst in number of requests occurs only 1000 requests are allowed. However, because 1000 requests are a quota of 2 seconds, the gateway wouldn’t route requests for the next second round. The configuration allows also to define how many token a request would cost by setting the property (redis-rate-limiter.requestedTokens), commonly it is set to 1.</p>
 </div>
+<div class="paragraph">
+<p>To use a gateway with a request limiting feature, it needs to be configured with the (RequestRateLimiter)gateway filter. The configuration can specify arguments to define a replenish rate, burst capacity and number of token that a request would cost. The example below illustrates how to configure a gateway with these arguments.</p>
 </div>
-<div class="sect1">
-<h2 id="_source_code"><a class="anchor" href="#_source_code"></a>Source Code</h2>
-<div class="sectionbody">
 <div class="listingblock">
-<div class="title">Java code from project</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java"><span class="fold-block hide-when-folded">import java.time.Instant;
-
-import reactor.core.publisher.Mono;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-</span><span class="fold-block">/**
- * @author : Haytham Mohamed
- * @created : Friday 3/26/21
- **/
-
-@RestController
-public class RestEndPoint {
-
-	@GetMapping("/backend")
-	public Mono&lt;String&gt; endpoint() {
-		return Mono.just("From backend service at " + Instant.now());
-	}
-}
-</span></code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route1
+          uri: http://localhost:8081
+          predicates:
+            - Path=/backend
+          filters:
+          - name: RequestRateLimiter
+            args:
+              redis-rate-limiter.replenishRate: 500
+              redis-rate-limiter.burstCapacity: 1000
+              redis-rate-limiter.requestedTokens: 1</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>Spring cloud gateway provides flexibility to define your own custom rate limiter implementation. It caters a RateLimiter interface to implement and define a bean. The rate limiter bean could be configured using SPEL expression as the case with a custom key resolver. For instance, one can define a custom rate limiter bean, i.e., named customRateLimiter and a custom key resolver, i.e., named customKeyResolver and configure a route like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Bean
+public KeyResolver customKeyResolver {
+	return exchange -&gt; ....  // returns a Mono of String
+}</code></pre>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_attributes"><a class="anchor" href="#_attributes"></a>Attributes</h2>
-<div class="sectionbody">
-<div class="dlist">
-<div class="title">Built-in</div>
-<dl>
-<dt class="hdlist1">asciidoctor-version</dt>
-<dd>
-<p>2.0.10</p>
-</dd>
-<dt class="hdlist1">safe-mode-name</dt>
-<dd>
-<p>unsafe</p>
-</dd>
-<dt class="hdlist1">docdir</dt>
-<dd>
-<p>/Users/haythamm/github/workspace/learn-scg-rate-limiting/documentation/src/docs/asciidoc</p>
-</dd>
-<dt class="hdlist1">docfile</dt>
-<dd>
-<p>/Users/haythamm/github/workspace/learn-scg-rate-limiting/documentation/src/docs/asciidoc/index.adoc</p>
-</dd>
-<dt class="hdlist1">imagesdir</dt>
-<dd>
-<p>images</p>
-</dd>
-</dl>
-</div>
-<div class="dlist">
-<div class="title">Custom</div>
-<dl>
-<dt class="hdlist1">project-version</dt>
-<dd>
-<p>0.0.1-SNAPSHOT</p>
-</dd>
-<dt class="hdlist1">sourcedir</dt>
-<dd>
-<p>/Users/haythamm/github/workspace/learn-scg-rate-limiting/documentation/src/main/java</p>
-</dd>
-<dt class="hdlist1">endpoint-url</dt>
-<dd>
-<p><a href="http://vmware.com" class="bare">http://vmware.com</a></p>
-</dd>
-</dl>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route1
+          uri: http://localhost:8081
+          predicates:
+            - Path=/backend
+          filters:
+          - name: RequestRateLimiter
+            args:
+              rate-limiter: "#{customRateLimiter}"
+              key-resolver: "#{customKeyResolver}"</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>An illustrating example is available in <a href="https://github.com/Haybu/learn-scg-rate-limiting">GitHub</a></p>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 0.0.1-SNAPSHOT<br>
-Last updated 2021-03-27 11:04:43 -0500
+Last updated 2021-03-29 14:38:32 -0500
 </div>
 </div>
 </div>
