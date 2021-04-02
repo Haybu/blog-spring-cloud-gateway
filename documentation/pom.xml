@@ -6,13 +6,13 @@
 
 	<parent>
 		<groupId>io.agilehandy</groupId>
-		<artifactId>learn-scg-rate-limiting</artifactId>
+		<artifactId>blog-spring-cloud-gateway</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>documentation</artifactId>
 	<name>documentation</name>
-	<description>Learn Spring Cloud Gateway :: documentation</description>
+	<description>Blog Spring Cloud Gateway :: documentation</description>
 
 	<dependencies>
 		<dependency>

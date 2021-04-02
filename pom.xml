@@ -11,13 +11,13 @@
 	</parent>
 
 	<groupId>io.agilehandy</groupId>
-	<artifactId>learn-scg-rate-limiting</artifactId>
+	<artifactId>blog-spring-cloud-gateway</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<packaging>pom</packaging>
 
-	<name>learn-scg-rate-limiting</name>
-	<description>Learn Spring Cloud Gateway :: Rate Limiting</description>
+	<name>blog-spring-cloud-gateway</name>
+	<description>Blog Spring Cloud Gateway :: Parent</description>
 
 	<properties>
 		<java.version>11</java.version>
