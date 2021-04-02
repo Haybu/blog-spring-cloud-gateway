@@ -13,19 +13,8 @@ spring:
             - Path=/backend
           filters:
             - SetPath=/backend
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
-                redis-rate-limiter.requestedTokens: 1
-#      filter:
-#        request-rate-limiter:
-#          deny-empty-key: false  # no key resolver needed
 
 management:
   health:
     redis:
       enabled: true
-
-# run redis
-# docker run -d --name redis -p 6379:6379 redis
