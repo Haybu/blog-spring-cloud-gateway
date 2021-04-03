@@ -15,6 +15,7 @@ spec:
       containers:
         - name: backend-service
           image: localhost:5000/backend-service:latest
+          imagePullPolicy: Always
           env:
             - name: spring.profiles.active
               value: kubernetes
@@ -25,6 +26,17 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+              scheme: HTTP
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+              scheme: HTTP
 ---
 kind: Service
 apiVersion: v1
@@ -53,6 +65,7 @@ spec:
       containers:
         - name: frontend-service
           image: localhost:5000/frontend-service:latest
+          imagePullPolicy: Always
           env:
             - name: spring.profiles.active
               value: kubernetes
@@ -63,6 +76,17 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+              scheme: HTTP
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+              scheme: HTTP
 ---
 kind: Service
 apiVersion: v1
