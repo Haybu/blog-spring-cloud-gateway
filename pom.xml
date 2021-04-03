@@ -47,8 +47,17 @@
 				<configuration> <!-- build container image -->
 					<image>
 						<builder>${builder}</builder>
+						<publish>true</publish>
 						<name>localhost:5000/${project.artifactId}</name>
 					</image>
+					<docker>
+						<publishRegistry>
+							<username>registryIsNoSecured</username> <!-- registry is not secured, I put any thing for the plugin to work -->
+							<password>registryIsNoSecured</password> <!-- registry is not secured, I put any thing for the plugin to work -->
+							<url>http://localhost:5000</url> <!-- local registry on Kind -->
+							<email>fake@somewhere.com</email> <!-- no needed for my local registry, I put any thing for the plugin to work -->
+						</publishRegistry>
+					</docker>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

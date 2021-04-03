@@ -84,7 +84,7 @@ spec:
   rules:
     - http:
         paths:
-          - path: /app/
+          - path: /frontend/
             pathType: Prefix
             backend:
               service:
