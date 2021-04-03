@@ -29,7 +29,6 @@ import org.springframework.web.reactive.function.client.WebClient;
  * @created : Friday 3/26/21
  **/
 
-
 @RestController
 public class RestEndPoint {
 
@@ -39,8 +38,14 @@ public class RestEndPoint {
 		this.webClient = webClient;
 	}
 
-	@GetMapping("/frontend")
-	public Mono<String> endpoint() {
-		return webClient.get().uri("/backend").retrieve().bodyToMono(String.class);
+	@GetMapping("/")
+	public Mono<String> ping() {
+		return Mono.just("hello from frontend service");
 	}
+
+	@GetMapping("/message")
+	public Mono<String> endpoint() {
+		return webClient.get().uri("/backend/message").retrieve().bodyToMono(String.class);
+	}
+
 }

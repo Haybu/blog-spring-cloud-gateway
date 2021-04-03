@@ -31,8 +31,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class RestEndPoint {
 
-	@GetMapping("/backend")
+	@GetMapping("/message")
 	public Mono<String> endpoint() {
 		return Mono.just("From backend service at " + Instant.now());
 	}
+
+	@GetMapping("/")
+	public Mono<String> ping() {
+		return Mono.just("hello from backend service");
+	}
+
 }

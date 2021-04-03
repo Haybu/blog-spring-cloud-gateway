@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+gateway:
+  url: http://localhost:9090
+
+---
+spring:
+  config:
+    activate:
+      on-cloud-platform: kubernetes
+
+gateway:
+  url: http://example-gateway
+

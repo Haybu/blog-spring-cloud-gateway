@@ -1,0 +1,11 @@
+server:
+  port: 8081
+
+---
+spring:
+  config:
+    activate:
+      on-cloud-platform: kubernetes
+
+server:
+  port: 8080
