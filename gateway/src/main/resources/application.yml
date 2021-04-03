@@ -10,9 +10,9 @@ spring:
         - id: route1
           uri: http://localhost:8081
           predicates:
-            - Path=/backend
+            - Path=/backend/**
           filters:
-            - SetPath=/backend
+            - StripPrefix=1
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 2
