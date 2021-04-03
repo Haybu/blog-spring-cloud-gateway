@@ -39,8 +39,8 @@ public class RestEndPoint {
 		this.webClient = webClient;
 	}
 
-	@GetMapping("/frontend")
+	@GetMapping("/message")
 	public Mono<String> endpoint() {
-		return webClient.get().uri("/backend").retrieve().bodyToMono(String.class);
+		return webClient.get().uri("/backend/message").retrieve().bodyToMono(String.class);
 	}
 }
