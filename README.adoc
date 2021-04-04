@@ -1,29 +1,65 @@
 
 # Spring Cloud Gateway for Kubernetes
 
-* Make sure you have Docker running
+* make sure you have Docker running
 
-* install Kind in your local machine. Scripts are provided under the infrastructure folder. Use one of the scripts to create a Kind cluster with a local registry and either contour or ambassador ingress controller.
+* install Kind and a local registry in your local machine. You can use the provided script:
 
-* follow the instructions (https://docs.pivotal.io/scg-k8s/1-0/installation.html)[here] to install Spring Cloud Gateway for Kubernetes.
-** per the instructions: to relocate the images do the following
 ```shell
-$ ./scripts/relocate-images.sh localhost:5000
+$ ./infrastructure/start-kind-registry.sh
+```
+
+* provided also the options to use either contour or ambassador ingress controller. Use either one of the following scripts to configure an ingress controller in Kind cluster
+
+```shell
+$ ./infrastructure/config-contour-ingress.sh
+```
+
+or
+
+```shell
+$ ./infrastructure/config-ambassador-ingress.sh
+```
+
+## Automatic
+
+You can use the provided script `./k8s/setup.sh` to deploy SCG for k8s, a workload gateway instance
+configured with routes, deploy the services and ingress. In the script, replace the variable `installer_dir`
+to point to a directory where you extract SCG for k8s installer. The installer could be downloaded from
+https://docs.pivotal.io/scg-k8s/1-0/installation.html[here]. You can follow the steps below to perform
+all steps manually.
+
+## Manual
+
+* follow the instructions https://docs.pivotal.io/scg-k8s/1-0/installation.html[here] to install Spring Cloud Gateway for Kubernetes.
+
+** per the instructions: to relocate the images do the following (installer_dir is where you extract SCG for K8s installer)
+```shell
+$ {installer_dir}/scripts/relocate-images.sh localhost:5000
 ```
 
 ** then run the installation
+
 ```shell
-$ ./script/install-spring-cloud-gateway.sh
+$ {installer_dir}/script/install-spring-cloud-gateway.sh
 ```
 
 * create a gateway instance:
+
 ```shell
 $ kubectl apply -f ./k8s/install-gateway.yml
 ```
 
-* create gateway route configuration and mappings:
+* create gateway route configuration:
+
 ```shell
-$ kubectl apply -f ./k8s/install-gateway-routes-mappings.yml
+$ kubectl apply -f ./k8s/install-gateway-routes-config.yml
+```
+
+* create gateway route configuration and mappings:
+
+```shell
+$ kubectl apply -f ./k8s/install-gateway-mappings.yml
 ```
 
 * build the project to create and push the images to the local registry. The plugin should create and push the image automatically by running this command (on the project root folder)
@@ -33,13 +69,19 @@ $ ./mvnw spring-boot:build-image
 ```
 
 * install the frontend and backend services
+
 ```shell
 $ kubectl apply -f ./k8s/install-services.yml
 ```
 
+* create ingress
+
+```shell
+$ kubectl apply -f ./k8s/install-ingress.yml
+```
+
 * test by accessing the frontend service through ingress
+
 ```shell
 $ curl http://localhost:80/frontend
 ```
-
-#include::documentation/src/docs/asciidoc/index.adoc[]
