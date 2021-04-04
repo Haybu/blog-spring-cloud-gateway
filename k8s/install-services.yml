@@ -1,4 +1,4 @@
-# make sure to have kind installed. run ../infrastructure/start-kind-cluster.sh script file
+# make sure to have kind installed. Use one script options under infrastructure folder
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -98,20 +98,4 @@ spec:
   ports:
     # Default port used by the image
     - port: 8080
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: example-ingress
-spec:
-  ingressClassName: ambassador
-  rules:
-    - http:
-        paths:
-          - path: /frontend/
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend-service
-                port:
-                  number: 8080
+

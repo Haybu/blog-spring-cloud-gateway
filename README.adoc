@@ -1,3 +1,45 @@
 
+# Spring Cloud Gateway for Kubernetes
 
-include::documentation/src/docs/asciidoc/index.adoc[]
+* Make sure you have Docker running
+
+* install Kind in your local machine. Scripts are provided under the infrastructure folder. Use one of the scripts to create a Kind cluster with a local registry and either contour or ambassador ingress controller.
+
+* follow the instructions (https://docs.pivotal.io/scg-k8s/1-0/installation.html)[here] to install Spring Cloud Gateway for Kubernetes.
+** per the instructions: to relocate the images do the following
+```shell
+$ ./scripts/relocate-images.sh localhost:5000
+```
+
+** then run the installation
+```shell
+$ ./script/install-spring-cloud-gateway.sh
+```
+
+* create a gateway instance:
+```shell
+$ kubectl apply -f ./k8s/install-gateway.yml
+```
+
+* create gateway route configuration and mappings:
+```shell
+$ kubectl apply -f ./k8s/install-gateway-routes-mappings.yml
+```
+
+* build the project to create and push the images to the local registry. The plugin should create and push the image automatically by running this command (on the project root folder)
+
+```shell
+$ ./mvnw spring-boot:build-image
+```
+
+* install the frontend and backend services
+```shell
+$ kubectl apply -f ./k8s/install-services.yml
+```
+
+* test by accessing the frontend service through ingress
+```shell
+$ curl http://localhost:80/frontend
+```
+
+#include::documentation/src/docs/asciidoc/index.adoc[]

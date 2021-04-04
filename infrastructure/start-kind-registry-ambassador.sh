@@ -40,14 +40,6 @@ EOF
 # (the network may already be connected)
 docker network connect "kind" "${reg_name}" || true
 
-# add engress ambassador controller
-# for an ingress object to be picked up by ambassador, it needs to be annotated as follows
-# kubectl annotate ingress example-ingress kubernetes.io/ingress.class=ambassador
-kubectl apply -f https://github.com/datawire/ambassador-operator/releases/latest/download/ambassador-operator-crds.yaml
-
-kubectl apply -n ambassador -f https://github.com/datawire/ambassador-operator/releases/latest/download/ambassador-operator-kind.yaml
-kubectl wait --timeout=180s -n ambassador --for=condition=deployed ambassadorinstallations/ambassador
-
 # Document the local registry
 # https://github.com/kubernetes/enhancements/tree/master/keps/sig-cluster-lifecycle/generic/1755-communicating-a-local-registry
 cat <<EOF | kubectl apply -f -
@@ -61,6 +53,13 @@ data:
     host: "localhost:${reg_port}"
     help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
 EOF
+
+### ingress ###
+
+# add ingress ambassador controller
+kubectl apply -f https://github.com/datawire/ambassador-operator/releases/latest/download/ambassador-operator-crds.yaml
+kubectl apply -n ambassador -f https://github.com/datawire/ambassador-operator/releases/latest/download/ambassador-operator-kind.yaml
+kubectl wait --timeout=180s -n ambassador --for=condition=deployed ambassadorinstallations/ambassador
 
 # create ingress class of ambassador and make it the default for any created ingress
 cat <<EOF | kubectl apply -f -
