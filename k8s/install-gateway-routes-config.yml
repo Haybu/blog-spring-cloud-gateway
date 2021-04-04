@@ -1,0 +1,13 @@
+---
+apiVersion: "tanzu.vmware.com/v1"
+kind: SpringCloudGatewayRouteConfig
+metadata:
+  name: backend-gateway-routes
+spec:
+  service:
+    name: backend-service
+  routes:
+    - predicates:
+        - Path=/backend/**
+      filters:
+        - StripPrefix=1

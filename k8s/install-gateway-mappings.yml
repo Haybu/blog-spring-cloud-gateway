@@ -1,0 +1,10 @@
+---
+apiVersion: "tanzu.vmware.com/v1"
+kind: SpringCloudGatewayMapping
+metadata:
+  name: backend-gateway-mapping
+spec:
+  gatewayRef:
+    name: example-gateway
+  routeConfigRef:
+    name: backend-gateway-routes

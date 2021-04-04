@@ -12,6 +12,7 @@ if [ "${running}" != 'true' ]; then
 fi
 
 # create a cluster with the local registry enabled in containerd
+# to use contour see this instructions here https://projectcontour.io/docs/main/deploy-options/ for how to configure Kind
 cat <<EOF | kind create cluster --wait 3m --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -21,9 +22,10 @@ containerdConfigPatches:
     endpoint = ["http://${reg_name}:${reg_port}"]
 nodes:
 - role: control-plane
+- role: worker
   kubeadmConfigPatches:
   - |
-    kind: InitConfiguration
+    kind: JoinConfiguration
     nodeRegistration:
       kubeletExtraArgs:
         node-labels: "ingress-ready=true"
@@ -52,23 +54,4 @@ data:
   localRegistryHosting.v1: |
     host: "localhost:${reg_port}"
     help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
-EOF
-
-### ingress ###
-
-# add ingress ambassador controller
-kubectl apply -f https://github.com/datawire/ambassador-operator/releases/latest/download/ambassador-operator-crds.yaml
-kubectl apply -n ambassador -f https://github.com/datawire/ambassador-operator/releases/latest/download/ambassador-operator-kind.yaml
-kubectl wait --timeout=180s -n ambassador --for=condition=deployed ambassadorinstallations/ambassador
-
-# create ingress class of ambassador and make it the default for any created ingress
-cat <<EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: IngressClass
-metadata:
-  name: ambassador
-  annotations:
-    ingressclass.kubernetes.io/is-default-class: "true"
-spec:
-  controller: getambassador.io/ingress-controller
 EOF

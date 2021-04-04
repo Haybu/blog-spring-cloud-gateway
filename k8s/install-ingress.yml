@@ -4,7 +4,7 @@ kind: Ingress
 metadata:
   name: services-ingress
 spec:
-  ingressClassName: ambassador
+  ingressClassName: contour
   rules:
     - host: localhost
       http:
