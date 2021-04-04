@@ -9,7 +9,9 @@
 $ ./infrastructure/start-kind-registry.sh
 ```
 
-* provided also the options to use either contour or ambassador ingress controller. Use either one of the following scripts to configure an ingress controller in Kind cluster
+* provided also the options to use either contour or ambassador ingress controller. Use either one of the following scripts to configure an ingress controller in Kind cluster. If you use contour ingress controller, then edit the
+ingress YAML file `./k8s/install-ingress.yml` and make sure you use `ingressClassName: contour`, otherwise it should be
+`ingressClassName: embassador`.
 
 ```shell
 $ ./infrastructure/config-contour-ingress.sh
@@ -83,5 +85,5 @@ $ kubectl apply -f ./k8s/install-ingress.yml
 * test by accessing the frontend service through ingress
 
 ```shell
-$ curl http://localhost:80/frontend
+$ curl http://localhost:80/frontend/
 ```
