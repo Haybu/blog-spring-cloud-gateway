@@ -14,12 +14,12 @@ ${installer_dir}/scripts/relocate-images.sh localhost:5000
 ${installer_dir}/scripts/install-spring-cloud-gateway.sh
 
 # assumed you have the images ready and you want to push
-docker push localhost:5000/frontend-service
-docker push localhost:5000/backend-service
+#docker push localhost:5000/frontend-service
+#docker push localhost:5000/backend-service
 
 # install gateway, routs, mappings, services and ingress
-kubectl apply -f ./k8s/install-gateway.yml
-kubectl apply -f ./k8s/install-gateway-routes-config.yml
-kubectl apply -f ./k8s/install-gateway-mappings.yml
-kubectl apply -f ./k8s/install-services.yml
-kubectl apply -f ./k8s/install-ingress.yml
+kubectl apply -f ./install-gateway.yml
+kubectl apply -f ./install-gateway-routes-config.yml
+kubectl apply -f ./install-gateway-mappings.yml
+kubectl apply -f ./install-services.yml
+kubectl apply -f ./install-ingress-2.yml
