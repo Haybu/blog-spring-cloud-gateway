@@ -3,12 +3,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: services-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: contour
   rules:
     - http:
         paths:
-          - path: /frontend
+          - path: /frontend(/|$)(.*)
             pathType: Prefix
             backend:
               service:
